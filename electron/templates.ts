@@ -1,4 +1,11 @@
 const fs = require('fs');
+const childProcess = require('child_process');
+
+type Template = {
+  name: string;
+  path: string;
+  data: string[]
+}
 
 const getTemplates = (path: string) => {
   return fs.readdirSync(path, { withFileTypes: true })
@@ -22,7 +29,20 @@ const getData = (path: string): string[] => {
   } catch (e) {
     return [];
   }
-
 }
 
-export {getTemplates}
+const openTemplate = (path: string, templateName: string) => {
+  childProcess.execSync(`open ${path}/${templateName}`);
+}
+
+const writeTemplate = async (path: string, template: Template) => {
+  return new Promise((resolve, reject) => {
+    fs.writeFile(`${path}/${template.name}/data.txt`, template.data.join('\n'), function (error: Error) {
+      if (error) reject(error);
+
+      resolve();
+    });
+  })
+}
+
+export {getTemplates, openTemplate, writeTemplate}

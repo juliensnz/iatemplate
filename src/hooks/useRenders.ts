@@ -5,7 +5,8 @@ const { ipcRenderer } = window.require('electron');
 
 type Render = {
   name: string;
-  path: string
+  template: string;
+  path: string;
 }
 
 const useRenders = (preferences: Preferences, currentTemplate: Template|undefined): [
@@ -19,7 +20,7 @@ const useRenders = (preferences: Preferences, currentTemplate: Template|undefine
       path
     }));
 
-    setRenders(updatedRenders)
+    setRenders(updatedRenders);
   }, [])
 
   useEffect(() => {

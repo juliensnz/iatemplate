@@ -3,83 +3,119 @@ import styled from 'styled-components'
 import {PreferenceContext} from '../context/PreferenceContext'
 import {useTemplates} from '../hooks/useTemplates'
 import {Render, useRenders} from '../hooks/useRenders'
-import {Button, Toolbar, AppBar, FormControl, Select, MenuItem, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from '@material-ui/core';
-import ReplayIcon from '@material-ui/icons/Replay';
-const { ipcRenderer } = window.require('electron');
+import {Renew20, Restart20, RequestQuote20, Launch20, AddFilled32, AddFilled24} from '@carbon/icons-react';
+import {FormSelect, Navbar, NavbarBrand, ListGroup, ListGroupItem} from 'shards-react';
+import {CreateRender} from './CreateRender'
 
+const {ipcRenderer} = window.require('electron');
 const Container = styled.div`
-display: flex;
-flex-direction: column;
-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
 `
 
-const Header = styled.div`
-height: 100px;
+const Spacer = styled.div`
+  flex: 1;
 `
 
+const Header = styled(Navbar)`
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+`
+
+const ButtonContainer = styled.div`
+  display: flex;
+`;
+
+const IconButton = styled.span`
+  display: flex;
+  align-items:center;
+  margin: 0 5px;
+
+  &:hover {
+    cursor: pointer;
+  }
+`
+
+const TemplateSelector = styled(FormSelect)`
+  border-radius: 20px;
+  border: none;
+  text-transform: capitalize;
+  padding: 0 40px 0 20px;
+  margin-right: 10px;
+`
+
+const Option = styled.option`
+  text-transform: capitalize;
+`
+
+const RenderList = styled(ListGroup)`
+  margin: 10px;
+`
+
+const RenderItem = styled(ListGroupItem)`
+  display: flex;
+`
 const Content = () => {
   const preferences = useContext(PreferenceContext);
-  const [templates, currentTemplate, setCurrentTemplate, reload] = useTemplates(preferences);
+  const [templates, currentTemplate, setCurrentTemplate, reload, updateTemplate] = useTemplates(preferences);
   const [renders] = useRenders(preferences, currentTemplate);
 
   return (
     <Container>
-      <AppBar position="static" variant='elevation'>
-        <Toolbar>
-          {currentTemplate && (
-            <>
-              <FormControl>
-                <Select
-                  value={currentTemplate.name}
-                  onChange={(event: any) => {
-                    setCurrentTemplate(event.currentTarget.dataset.value)
-                  }}
-                >
-                  {templates.map(template => <MenuItem key={template.name} value={template.name}>{template.name}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <ReplayIcon onClick={reload} />
-            </>
-          )}
+      <Header type="dark" theme="primary">
+        <NavbarBrand>Jade's Factory</NavbarBrand>
+        <Spacer />
 
-          <Button onClick={() => {
-            if (undefined === currentTemplate) return;
-            ipcRenderer.invoke('templates:generate', {
-              template: currentTemplate,
-              target: `${preferences.logoDirectory}/renders`,
-              name: 'claudie_piol',
-              data: {
-                company_name: 'Claudie Piol',
-                city: 'Guidel',
-                address_street_postcode: '2 Kergaher 56520',
-                phone_number: '0647172103',
-                email_address: 'claudie.piol@gmail.com',
-                website: 'claudiepiol.com'
-              }
-            });
-          }}>generate</Button>
-        </Toolbar>
-      </AppBar>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Client Name</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {renders.map((render: Render) => (
-              <TableRow key={render.name}>
-                <TableCell>
-                  {render.name}
-                </TableCell>
-                <TableCell align="right">yolo</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+        <ButtonContainer>
+          {currentTemplate && <TemplateSelector id="template-selector" value={currentTemplate.name} onChange={(event: any) => {
+            setCurrentTemplate(event.currentTarget.value)
+          }}>
+            {templates.map(template => <Option key={template.name} value={template.name}>{template.name}</Option>)}
+          </TemplateSelector>}
+          <IconButton onClick={reload}><Renew20 color="white" /></IconButton>
+          {currentTemplate && <IconButton onClick={() => {
+            ipcRenderer.invoke('templates:open', {templateName: currentTemplate.name});
+          }}><Launch20 color="white" /></IconButton>}
+          {currentTemplate && <CreateRender template={currentTemplate} updateTemplate={(template) => {
+            updateTemplate(template);
+            reload();
+          }}/>}
+        </ButtonContainer>
+      </Header>
+      <RenderList>
+        {0 === renders.length && (
+          <RenderItem>There is no render for now. To create a new render from this template click on the &nbsp; <AddFilled24 color="#007bff" />&nbsp;  button</RenderItem>
+        )}
+        {renders.map((render: Render) => (
+          <RenderItem key={render.name}>
+            {render.name}
+            <Spacer />
+            <IconButton onClick={() => {
+              if (undefined === currentTemplate) return;
+              ipcRenderer.invoke('templates:generate', {
+                template: currentTemplate,
+                target: `${preferences.logoDirectory}/renders`,
+                name: 'claudie_piol',
+                data: {
+                  company_name: 'Claudie Piol',
+                  city: 'Guidel',
+                  address_street_postcode: '2 Kergaher 56520',
+                  phone_number: '0647172103',
+                  email_address: 'claudie.piol@gmail.com',
+                  website: 'claudiepiol.com'
+                }
+              });
+            }}><Restart20 /></IconButton>
+            <IconButton onClick={reload}><RequestQuote20 /></IconButton>
+            <IconButton onClick={() => {
+              ipcRenderer.invoke('renders:open', {templateName: render.template, renderName: render.name});
+            }}><Launch20 /></IconButton>
+          </RenderItem>
+        ))}
+      </RenderList>
     </Container>
   )
 }

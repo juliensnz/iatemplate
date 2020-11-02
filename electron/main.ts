@@ -2,9 +2,8 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import * as isDev from 'electron-is-dev';
 import installExtension, { REACT_DEVELOPER_TOOLS } from "electron-devtools-installer";
-import {getTemplates} from './templates';
-import {getRenders} from './renders';
-const fs = require('fs');
+import {getTemplates, openTemplate, writeTemplate} from './templates';
+import {getRenders, openRender} from './renders';
 const Store = require('electron-store');
 const store = new Store();
 const { dialog } = require('electron')
@@ -16,6 +15,7 @@ ipcMain.handle('getStoreValue', (event, key) => {
   return store.get(key);
 });
 ipcMain.handle('templates:get', (event, path) => {
+  console.log('refresh templates')
   return getTemplates(path);
 });
 ipcMain.handle('renders:get', (event, options) => {
@@ -27,6 +27,22 @@ ipcMain.handle('templates:generate', (event, options) => {
   const command = `./bash/generate.sh ${options.template.path} ${options.target}/${options.template.name} ${options.name} '${JSON.stringify(options.data)}'`;
   console.log(command);
   // return childProcess.execSync(command);
+});
+ipcMain.handle('templates:open', (event, options) => {
+  openTemplate(store.get('preferences').logoDirectory, options.templateName);
+});
+
+ipcMain.handle('templates:write', (event, template) => {
+  console.log('write template')
+  try {
+    writeTemplate(store.get('preferences').logoDirectory, template);
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+ipcMain.handle('renders:open', (event, options) => {
+  openRender(store.get('preferences').logoDirectory, options.templateName, options.renderName);
 });
 
 const checkLogoDirectory = async () => {

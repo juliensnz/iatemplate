@@ -1,7 +1,12 @@
 const fs = require('fs');
+const childProcess = require('child_process');
 
 const getRenders = (options: {path: string, templateName: string}) => {
-  return fs.readdirSync(`${options.path}/renders/${options.templateName}`, { withFileTypes: true })
+  const renderFolder = `${options.path}/renders/${options.templateName}`;
+
+  if (!fs.existsSync(renderFolder)) return [];
+
+  return fs.readdirSync(renderFolder, { withFileTypes: true })
     .filter((dirent: any) => dirent.isDirectory())
     .map((dirent: any) => {
       const renderPath = `${options.path}/${dirent.name}`;
@@ -10,9 +15,14 @@ const getRenders = (options: {path: string, templateName: string}) => {
       return {
         name: dirent.name,
         path: renderPath,
+        template: options.templateName
         // data
       }
     });
+}
+
+const openRender = (path: string, templateName: string, renderName: string) => {
+  childProcess.execSync(`open ${path}/renders/${templateName}/${renderName}`);
 }
 
 // const getData = (path: string): {[key: string]: string} => {
@@ -24,4 +34,4 @@ const getRenders = (options: {path: string, templateName: string}) => {
 //   }
 // }
 
-export {getRenders}
+export {getRenders, openRender}
