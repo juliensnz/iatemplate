@@ -1,10 +1,10 @@
 import {createContext} from 'react';
 
 type Preferences = {
-  logoDirectory?: string
-}
+  logoDirectory?: string;
+};
 
 const PreferenceContext = createContext<Preferences>({});
 
 export {PreferenceContext};
-export type {Preferences}
+export type {Preferences};

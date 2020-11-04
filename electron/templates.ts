@@ -1,10 +1,12 @@
 const fs = require('fs');
 const childProcess = require('child_process');
 
+const FIELDS_FILE_NAME = 'fields.txt'
+
 type Template = {
   name: string;
   path: string;
-  data: string[]
+  fields: string[]
 }
 
 const getTemplates = (path: string) => {
@@ -12,17 +14,17 @@ const getTemplates = (path: string) => {
     .filter((dirent: any) => dirent.isDirectory() && dirent.name !== 'renders')
     .map((dirent: any) => {
       const templatePath = `${path}/${dirent.name}`;
-      const data = getData(`${templatePath}/data.txt`);
+      const fields = getFields(`${templatePath}/${FIELDS_FILE_NAME}`);
 
       return {
         name: dirent.name,
         path: templatePath,
-        data
+        fields
       }
     });
 }
 
-const getData = (path: string): string[] => {
+const getFields = (path: string): string[] => {
   try {
     const file = fs.readFileSync(path, 'utf8');
     return (new String(file)).trim().split('\n');
@@ -37,7 +39,7 @@ const openTemplate = (path: string, templateName: string) => {
 
 const writeTemplate = async (path: string, template: Template) => {
   return new Promise((resolve, reject) => {
-    fs.writeFile(`${path}/${template.name}/data.txt`, template.data.join('\n'), function (error: Error) {
+    fs.writeFile(`${path}/${template.name}/${FIELDS_FILE_NAME}`, template.fields.join('\n'), function (error: Error) {
       if (error) reject(error);
 
       resolve();
