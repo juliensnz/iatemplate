@@ -21,3 +21,4 @@ sleep 5
 open "$DESTINATION_FOLDER/$CLIENT_IDENTIFIER/declinaisons.ai"
 sleep 5
 osascript ./scripts/export.scpt
+$

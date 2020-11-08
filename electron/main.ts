@@ -1,12 +1,12 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import {app, BrowserWindow, ipcMain} from 'electron';
 import * as path from 'path';
 import * as isDev from 'electron-is-dev';
-import installExtension, { REACT_DEVELOPER_TOOLS } from "electron-devtools-installer";
+import installExtension, {REACT_DEVELOPER_TOOLS} from 'electron-devtools-installer';
 import {getTemplates, openTemplate, writeTemplate} from './templates';
-import {getRenders, openRender} from './renders';
+import {generateRender, getRenders, openRender} from './renders';
 const Store = require('electron-store');
 const store = new Store();
-const { dialog } = require('electron')
+const {dialog} = require('electron');
 const childProcess = require('child_process');
 
 let win: BrowserWindow | null = null;
@@ -15,25 +15,12 @@ ipcMain.handle('getStoreValue', (event, key) => {
   return store.get(key);
 });
 ipcMain.handle('templates:get', (event, path) => {
-  console.log('refresh templates')
   return getTemplates(path);
-});
-ipcMain.handle('renders:get', (event, options) => {
-  return getRenders(options);
-});
-
-ipcMain.handle('templates:generate', (event, options) => {
-  console.log(options);
-  const command = `./bash/generate.sh ${options.template.path} ${options.target}/${options.template.name} ${options.name} '${JSON.stringify(options.data)}'`;
-  console.log(command);
-  // return childProcess.execSync(command);
 });
 ipcMain.handle('templates:open', (event, options) => {
   openTemplate(store.get('preferences').logoDirectory, options.templateName);
 });
-
 ipcMain.handle('templates:write', (event, template) => {
-  console.log('write template')
   try {
     writeTemplate(store.get('preferences').logoDirectory, template);
   } catch (error) {
@@ -41,36 +28,46 @@ ipcMain.handle('templates:write', (event, template) => {
   }
 });
 
-ipcMain.handle('renders:open', (event, options) => {
-  openRender(store.get('preferences').logoDirectory, options.templateName, options.renderName);
+ipcMain.handle('renders:get', (event, options) => {
+  return getRenders(options);
+});
+
+ipcMain.handle('renders:generate', async (event, render) => {
+  await generateRender(store.get('preferences').logoDirectory, render);
+});
+
+ipcMain.handle('renders:open', (event, render) => {
+  openRender(store.get('preferences').logoDirectory, render.template, render.identifier);
 });
 
 const checkLogoDirectory = async () => {
   while (undefined === store.get('preferences')) {
-    const logoDirectory = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+    const logoDirectory = await dialog.showOpenDialog({properties: ['openDirectory']});
     if (logoDirectory.canceled) {
       continue;
     }
 
     console.log(logoDirectory);
     const preferences = {
-      logoDirectory: logoDirectory.filePaths[0]
+      logoDirectory: logoDirectory.filePaths[0],
     };
 
     store.set('preferences', preferences);
     ipcMain.emit('preferences:updated');
   }
-}
+};
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1200,
+    height: 800,
+    x: 0,
+    y: 300,
     webPreferences: {
       enableRemoteModule: true,
-      nodeIntegration: true
-    }
-  })
+      nodeIntegration: true,
+    },
+  });
 
   if (isDev) {
     win.loadURL('http://localhost:3000/index.html');
@@ -79,7 +76,7 @@ function createWindow() {
     win.loadURL(`file://${__dirname}/../index.html`);
   }
 
-  win.on('closed', () => win = null);
+  win.on('closed', () => (win = null));
 
   // Hot Reloading
   if (isDev) {
@@ -87,20 +84,20 @@ function createWindow() {
     require('electron-reload')(__dirname, {
       electron: path.join(__dirname, '..', '..', 'node_modules', '.bin', 'electron'),
       forceHardReset: true,
-      hardResetMethod: 'exit'
+      hardResetMethod: 'exit',
     });
   }
 
   // DevTools
   installExtension(REACT_DEVELOPER_TOOLS)
-    .then((name) => console.log(`Added Extension:  ${name}`))
-    .catch((err) => console.log('An error occurred: ', err));
+    .then(name => console.log(`Added Extension:  ${name}`))
+    .catch(err => console.log('An error occurred: ', err));
 
   if (isDev) {
     win.webContents.openDevTools();
   }
 
-  checkLogoDirectory()
+  checkLogoDirectory();
 }
 
 app.on('ready', createWindow);

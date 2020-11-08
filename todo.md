@@ -1,0 +1,4 @@
+- add duplicate template
+- add upgrade system
+- fix generate file bug
+- polish style

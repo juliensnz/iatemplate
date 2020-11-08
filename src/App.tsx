@@ -103,8 +103,8 @@ const App = () => {
             {currentTemplate && (
               <CreateRender
                 template={currentTemplate}
-                updateTemplate={template => {
-                  updateTemplate(template);
+                updateTemplate={async template => {
+                  await updateTemplate(template);
                   reload();
                 }}
                 generateRender={generateRender}
@@ -121,23 +121,26 @@ const App = () => {
             </RenderItem>
           )}
           {renders.map((render: Render) => (
-            <RenderItem key={render.name}>
-              {render.name}
+            <RenderItem key={render.identifier}>
+              {render.name ?? render.identifier}
               <Spacer />
               <IconButton
                 onClick={() => {
-                  if (undefined === currentTemplate) return;
-                  // generateRender(currentTemplate);
+                  ipcRenderer.invoke('renders:generate', render);
                 }}
               >
                 <Restart20 />
               </IconButton>
-              <IconButton onClick={reload}>
+              <IconButton
+                onClick={() => {
+                  // ipcRenderer.invoke('renders:generate', render);
+                }}
+              >
                 <RequestQuote20 />
               </IconButton>
               <IconButton
                 onClick={() => {
-                  ipcRenderer.invoke('renders:open', {templateName: render.template, renderName: render.name});
+                  ipcRenderer.invoke('renders:open', render);
                 }}
               >
                 <Launch20 />

@@ -1,9 +1,9 @@
-import React, {ChangeEvent, useEffect, useState} from 'react';
+import React, {ChangeEvent, useCallback, useEffect, useState} from 'react';
 import {AddFilled32, Close32} from '@carbon/icons-react';
 import styled from 'styled-components';
 import {Form, FormGroup, FormInput, Card, CardHeader, CardBody, CardTitle, Button} from 'shards-react';
-import {Template} from '../hooks/useTemplates';
 import {Render} from '../hooks/useRenders';
+import {Template} from '../../common/model/template';
 
 const IconButton = styled.span`
   display: flex;
@@ -33,7 +33,7 @@ const CreateModal = styled.div<{isMounted: boolean}>`
 const Title = styled(CardTitle)`
   font-weight: 100;
   font-size: 25px;
-  line-height: 25px;
+  line-height: 35px;
   margin-bottom: 0;
 `;
 const Header = styled(CardHeader)`
@@ -48,6 +48,12 @@ const Container = styled(Card)`
 `;
 const Body = styled(CardBody)`
   overflow: scroll;
+`;
+
+const Input = styled(FormInput)`
+  &:invalid {
+    border-color: tomato;
+  }
 `;
 
 const Textarea = styled.textarea`
@@ -68,6 +74,7 @@ const Spacer = styled.div`
 const CreateRender = ({
   template,
   updateTemplate,
+  generateRender,
 }: {
   template: Template;
   updateTemplate: (newTemplate: Template) => void;
@@ -77,15 +84,27 @@ const CreateRender = ({
   const [isVisible, setIsVisible] = useState(false);
   const doesNotHaveTemplateFields = 0 === template.fields.length;
   const [rawFields, setRawFields] = useState(doesNotHaveTemplateFields ? '' : template.fields.join('\n'));
-  const fields = rawFields.trim().split('\n');
-  const [data, setData] = useState({});
+  const fields = '' === rawFields ? [] : rawFields.trim().split('\n');
+  const [data, setData] = useState<{[key: string]: string}>({});
+  const [renderName, setRenderName] = useState<string>('');
 
   useEffect(() => {
     if (!doesNotHaveTemplateFields) {
       setRawFields(template.fields.join('\n'));
       setData({});
+      setRenderName('');
     }
   }, [doesNotHaveTemplateFields, template]);
+
+  const validateRender = useCallback(
+    (render: Render): boolean =>
+      typeof render.name !== 'string' ||
+      0 === render.name.length ||
+      undefined === render.template ||
+      undefined === render.data ||
+      fields.some((field: string) => render.data[field] === undefined),
+    [fields]
+  );
 
   return (
     <>
@@ -103,7 +122,7 @@ const CreateRender = ({
         <CreateModal isMounted={isVisible || true}>
           <Container>
             <Header>
-              <Title>Create a new render</Title>
+              <Title>Create a new render for "{template.name}" template</Title>
               <IconButton
                 onClick={() => {
                   setIsOpen(false);
@@ -115,6 +134,18 @@ const CreateRender = ({
             <Body>
               {!doesNotHaveTemplateFields ? (
                 <Form>
+                  <FormGroup>
+                    <label htmlFor={`field-render-name`}>Client identifier</label>
+                    <Input
+                      id={`field-render-name`}
+                      required
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                        setRenderName(event.currentTarget.value);
+                      }}
+                      value={renderName}
+                      placeholder="Michel Drucker"
+                    />
+                  </FormGroup>
                   {fields.map((fieldName: string) => {
                     const niceName = fieldName.split('_').join(' ');
 
@@ -123,9 +154,13 @@ const CreateRender = ({
                         <label htmlFor={`field-${fieldName}`}>
                           {niceName} ({fieldName})
                         </label>
-                        <FormInput
+                        <Input
                           id={`field-${fieldName}`}
-                          onChange={(event: ChangeEvent<HTMLInputElement>) => {}}
+                          required
+                          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                            setData({...data, [fieldName]: event.currentTarget.value});
+                          }}
+                          value={data[fieldName]}
                           placeholder={niceName}
                         />
                       </FormGroup>
@@ -133,7 +168,24 @@ const CreateRender = ({
                   })}
                   <ButtonContainer>
                     <Spacer />
-                    <Button onClick={() => {}} pill>
+                    <Button
+                      onClick={() => {
+                        debugger;
+                        const newRender = {
+                          identifier: renderName.split(' ').join('_').toLowerCase(),
+                          name: renderName,
+                          template: template.name,
+                          data,
+                        };
+                        if (validateRender(newRender)) {
+                          alert('render not valid');
+                          console.log(newRender);
+                        }
+                        console.log('generate render', newRender);
+                        generateRender(newRender);
+                      }}
+                      pill
+                    >
                       Confirm
                     </Button>
                   </ButtonContainer>

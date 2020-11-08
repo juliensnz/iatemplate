@@ -1,13 +1,9 @@
 import {useState, useEffect, useCallback} from 'react';
 import {Preferences} from '../context/PreferenceContext';
 import {Render} from './useRenders';
-const {ipcRenderer} = window.require('electron');
+import {Template} from '../../common/model/template';
 
-type Template = {
-  name: string;
-  path: string;
-  fields: string[];
-};
+const {ipcRenderer} = window.require('electron');
 
 const useTemplates = (
   preferences: Preferences
@@ -34,7 +30,7 @@ const useTemplates = (
     }
   }, []);
 
-  const writeTemplate = useCallback(async (template: Template) => {
+  const updateTemplate = useCallback(async (template: Template) => {
     await ipcRenderer.invoke('templates:write', template);
   }, []);
 
@@ -43,7 +39,7 @@ const useTemplates = (
   ]);
 
   const generateRender = useCallback(async (render: Render) => {
-    return await ipcRenderer.invoke('templates:generate', render);
+    return await ipcRenderer.invoke('renders:generate', render);
   }, []);
 
   const setCurrentTemplateByName = useCallback(
@@ -59,8 +55,7 @@ const useTemplates = (
     }
   }, [preferences.logoDirectory, getTemplates]);
 
-  return [templates, currentTemplate, setCurrentTemplateByName, updateTemplates, writeTemplate, generateRender];
+  return [templates, currentTemplate, setCurrentTemplateByName, updateTemplates, updateTemplate, generateRender];
 };
 
 export {useTemplates};
-export type {Template};

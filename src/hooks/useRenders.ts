@@ -1,12 +1,13 @@
 import {useState, useMemo, useEffect} from 'react';
 import {Preferences} from '../context/PreferenceContext';
-import {Template} from './useTemplates';
+import {Template} from '../../common/model/template';
+
 const {ipcRenderer} = window.require('electron');
 
 type Render = {
+  identifier: string;
   name: string;
   template: string;
-  path: string;
   data: {[key: string]: string};
 };
 
