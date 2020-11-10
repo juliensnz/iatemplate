@@ -4,8 +4,8 @@ import {launchExport, launchRenaming, packageTemplate, waitForFileToBeOpen} from
 
 const childProcess = require('child_process');
 
-const getRenders = (options: {path: string; templateName: string}) => {
-  const renderFolder = getRenderFolder(options.path, options.templateName);
+const getRenders = (path: string, templateName: string) => {
+  const renderFolder = `${path}/renders/${templateName}`;
 
   return getFoldersInFolder(renderFolder).map((folder: any) => {
     const render = getJsonData(`${renderFolder}/${folder.name}/data.json`);
@@ -13,16 +13,17 @@ const getRenders = (options: {path: string; templateName: string}) => {
     return {
       ...render,
       identifier: folder.name,
-      template: options.templateName,
+      template: templateName,
     };
   });
 };
 
 const openRender = (path: string, templateName: string, renderName: string) => {
-  openFile(`${getRenderFolder(path, templateName)}/${renderName}`);
+  openFile(getRenderFolder(path, templateName, renderName));
 };
 
 const generateRender = async (path: string, render: Render) => {
+  console.log(path, render);
   removePreviousRender(path, render);
   await openTemplateFile(path, render);
   await packageTemplate(path, render);
@@ -34,20 +35,23 @@ const generateRender = async (path: string, render: Render) => {
 };
 
 // Utilitary methods
-const getRenderFolder = (path: string, templateName: string) => `${path}/renders/${templateName}`;
+const getRenderFolder = (path: string, templateName: string, renderIdentifier: string) =>
+  `${path}/renders/${templateName}/${renderIdentifier}`;
+
 const getTemplateFolder = (path: string, templateName: string) => `${path}/${templateName}`;
 
 const openFileAndWait = async (path: string) => {
   openFile(path);
+
   return await waitForFileToBeOpen(path);
 };
 
 const dumpConfiguration = (path: string, render: Render) => {
-  writeJsonData(`${getRenderFolder(path, render.template)}/${render.identifier}/data.json`, render);
+  writeJsonData(`${getRenderFolder(path, render.template, render.identifier)}/data.json`, render);
 };
 
 const removePreviousRender = (path: string, render: Render) => {
-  const renderFolder = getRenderFolder(path, render.template);
+  const renderFolder = getRenderFolder(path, render.template, render.identifier);
 
   childProcess.execSync(`rm -rf ${renderFolder}`);
   childProcess.execSync(`mkdir -p ${path}/renders/${render.template}/`);
@@ -57,10 +61,10 @@ const openTemplateFile = async (path: string, render: Render) => {
   await openFileAndWait(`${getTemplateFolder(path, render.template)}/declinaisons.ai`);
 };
 const openRenderSourceFile = async (path: string, render: Render) => {
-  await openFileAndWait(`${getRenderFolder(path, render.template)}/Links/Elements.ai"`);
+  await openFileAndWait(`${getRenderFolder(path, render.template, render.identifier)}/Links/Elements.ai`);
 };
 const openRenderVariantFile = async (path: string, render: Render) => {
-  await openFileAndWait(`${getRenderFolder(path, render.template)}/declinaisons.ai`);
+  await openFileAndWait(`${getRenderFolder(path, render.template, render.identifier)}/declinaisons.ai`);
 };
 
 export {getRenders, openRender, generateRender};

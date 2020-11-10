@@ -7,7 +7,6 @@ import {generateRender, getRenders, openRender} from './renders';
 const Store = require('electron-store');
 const store = new Store();
 const {dialog} = require('electron');
-const childProcess = require('child_process');
 
 let win: BrowserWindow | null = null;
 
@@ -29,7 +28,7 @@ ipcMain.handle('templates:write', (event, template) => {
 });
 
 ipcMain.handle('renders:get', (event, options) => {
-  return getRenders(options);
+  return getRenders(store.get('preferences').logoDirectory, options.templateName);
 });
 
 ipcMain.handle('renders:generate', async (event, render) => {
@@ -47,7 +46,6 @@ const checkLogoDirectory = async () => {
       continue;
     }
 
-    console.log(logoDirectory);
     const preferences = {
       logoDirectory: logoDirectory.filePaths[0],
     };

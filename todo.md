@@ -1,4 +1,5 @@
 - add duplicate template
 - add upgrade system
-- fix generate file bug
+- fix generate file bug [DONE]
 - polish style
+- progress bar and error display

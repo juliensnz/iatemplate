@@ -3,10 +3,13 @@ import styled from 'styled-components';
 import {PreferenceContext} from './context/PreferenceContext';
 import {useTemplates} from './hooks/useTemplates';
 import {Render, useRenders} from './hooks/useRenders';
-import {Renew20, Restart20, RequestQuote20, Launch20, AddFilled24} from '@carbon/icons-react';
+import {Restart20, RequestQuote20, Launch20, AddFilled24} from '@carbon/icons-react';
 import {FormSelect, Navbar, NavbarBrand, ListGroup, ListGroupItem} from 'shards-react';
 import {CreateRender} from './components/CreateRender';
 import {usePreferences} from './hooks/usePreferences';
+import {RefreshState} from './components/RefreshState';
+import {IconButton} from './components/UI';
+import {RegenerateRender} from './components/RegenerateRender';
 
 const {ipcRenderer} = window.require('electron');
 const Container = styled.div`
@@ -30,16 +33,6 @@ const ButtonContainer = styled.div`
   display: flex;
 `;
 
-const IconButton = styled.span`
-  display: flex;
-  align-items: center;
-  margin: 0 5px;
-
-  &:hover {
-    cursor: pointer;
-  }
-`;
-
 const TemplateSelector = styled(FormSelect)`
   border-radius: 20px;
   border: none;
@@ -54,16 +47,34 @@ const Option = styled.option`
 
 const RenderList = styled(ListGroup)`
   margin: 10px;
+  margin-bottom: 50px;
 `;
 
 const RenderItem = styled(ListGroupItem)`
   display: flex;
 `;
+
+const Footer = styled.div`
+  width: 100vw;
+  bottom: 0;
+  position: fixed;
+  height: 50px;
+  display: flex;
+  padding: 0 10px;
+  border-top: 1px solid #ccc;
+  background-color: #f5f5f5;
+`;
+
 const App = () => {
   const preferences = usePreferences();
-  const [templates, currentTemplate, setCurrentTemplate, reload, updateTemplate, generateRender] = useTemplates(
-    preferences
-  );
+  const [
+    templates,
+    currentTemplate,
+    setCurrentTemplate,
+    updateTemplates,
+    updateTemplate,
+    generateRender,
+  ] = useTemplates(preferences);
   const [renders] = useRenders(preferences, currentTemplate);
 
   return (
@@ -88,9 +99,6 @@ const App = () => {
                 ))}
               </TemplateSelector>
             )}
-            <IconButton onClick={reload}>
-              <Renew20 color="white" />
-            </IconButton>
             {currentTemplate && (
               <IconButton
                 onClick={() => {
@@ -105,7 +113,7 @@ const App = () => {
                 template={currentTemplate}
                 updateTemplate={async template => {
                   await updateTemplate(template);
-                  reload();
+                  updateTemplates();
                 }}
                 generateRender={generateRender}
               />
@@ -124,13 +132,11 @@ const App = () => {
             <RenderItem key={render.identifier}>
               {render.name ?? render.identifier}
               <Spacer />
-              <IconButton
-                onClick={() => {
+              <RegenerateRender
+                onRegenerate={() => {
                   ipcRenderer.invoke('renders:generate', render);
                 }}
-              >
-                <Restart20 />
-              </IconButton>
+              />
               <IconButton
                 onClick={() => {
                   // ipcRenderer.invoke('renders:generate', render);
@@ -148,6 +154,10 @@ const App = () => {
             </RenderItem>
           ))}
         </RenderList>
+        <Footer>
+          <Spacer />
+          <RefreshState onRefresh={updateTemplates} />
+        </Footer>
       </Container>
     </PreferenceContext.Provider>
   );

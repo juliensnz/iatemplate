@@ -32,7 +32,7 @@ const getTxtData = (path: string): string[] => {
   }
 };
 
-const writeTxtData = (path: string, data: string[]): Promise<void> {
+const writeTxtData = (path: string, data: string[]): Promise<void> => {
   return new Promise((resolve, reject) => {
     fs.writeFile(path, data.join('\n'), function (error: Error) {
       if (error) reject(error);

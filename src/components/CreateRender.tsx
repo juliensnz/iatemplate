@@ -1,7 +1,7 @@
 import React, {ChangeEvent, useCallback, useEffect, useState} from 'react';
 import {AddFilled32, Close32} from '@carbon/icons-react';
 import styled from 'styled-components';
-import {Form, FormGroup, FormInput, Card, CardHeader, CardBody, CardTitle, Button} from 'shards-react';
+import {Form, FormGroup, FormInput, FormTextarea, Card, CardHeader, CardBody, CardTitle, Button} from 'shards-react';
 import {Render} from '../hooks/useRenders';
 import {Template} from '../../common/model/template';
 
@@ -154,10 +154,10 @@ const CreateRender = ({
                         <label htmlFor={`field-${fieldName}`}>
                           {niceName} ({fieldName})
                         </label>
-                        <Input
+                        <FormTextarea
                           id={`field-${fieldName}`}
                           required
-                          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                          onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
                             setData({...data, [fieldName]: event.currentTarget.value});
                           }}
                           value={data[fieldName]}
@@ -170,7 +170,6 @@ const CreateRender = ({
                     <Spacer />
                     <Button
                       onClick={() => {
-                        debugger;
                         const newRender = {
                           identifier: renderName.split(' ').join('_').toLowerCase(),
                           name: renderName,
@@ -179,9 +178,8 @@ const CreateRender = ({
                         };
                         if (validateRender(newRender)) {
                           alert('render not valid');
-                          console.log(newRender);
                         }
-                        console.log('generate render', newRender);
+
                         generateRender(newRender);
                       }}
                       pill

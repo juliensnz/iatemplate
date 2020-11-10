@@ -11,14 +11,14 @@ const useTemplates = (
   Template[],
   Template | undefined,
   (newCurrentTemplate: string) => void,
-  () => void,
+  () => Promise<void>,
   (updatedTemplate: Template) => void,
-  (render: Render) => void
+  (render: Render) => Promise<void>
 ] => {
   const [templates, setTemplates] = useState([]);
   const [currentTemplate, setCurrentTemplate] = useState<Template | undefined>(undefined);
 
-  const getTemplates = useCallback(async (path: string) => {
+  const getTemplates = useCallback(async (path: string): Promise<void> => {
     const updatedTemplates = await ipcRenderer.invoke('templates:get', path);
 
     setTemplates(updatedTemplates);
@@ -34,11 +34,13 @@ const useTemplates = (
     await ipcRenderer.invoke('templates:write', template);
   }, []);
 
-  const updateTemplates = useCallback(() => preferences.logoDirectory && getTemplates(preferences.logoDirectory), [
-    preferences,
-  ]);
+  const updateTemplates = useCallback(async (): Promise<void> => {
+    if (!preferences.logoDirectory) return;
 
-  const generateRender = useCallback(async (render: Render) => {
+    await getTemplates(preferences.logoDirectory);
+  }, [preferences]);
+
+  const generateRender = useCallback(async (render: Render): Promise<void> => {
     return await ipcRenderer.invoke('renders:generate', render);
   }, []);
 

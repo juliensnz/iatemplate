@@ -26,7 +26,6 @@ const packageTemplate = (path: string, render: Render) => {
 };
 
 const launchRenaming = (data: {[key: string]: string}) => {
-  console.log(data);
   childProcess.execSync(`osascript ./scripts/launch_rename.scpt '${JSON.stringify(data)}'`);
 };
 
