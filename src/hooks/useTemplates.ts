@@ -55,7 +55,7 @@ const useTemplates = (
     if (undefined !== preferences.logoDirectory) {
       getTemplates(preferences.logoDirectory);
     }
-  }, [preferences.logoDirectory, getTemplates]);
+  }, [preferences, getTemplates]);
 
   return [templates, currentTemplate, setCurrentTemplateByName, updateTemplates, updateTemplate, generateRender];
 };
