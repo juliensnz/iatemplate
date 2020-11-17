@@ -6,6 +6,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'shards-ui/dist/css/shards.min.css';
 import {App} from './App';
 import {createGlobalStyle} from 'styled-components';
+import {ProgressProvider} from './context/ProgressContext';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -16,7 +17,9 @@ const GlobalStyle = createGlobalStyle`
 ReactDOM.render(
   <>
     <GlobalStyle />
-    <App />
+    <ProgressProvider>
+      <App />
+    </ProgressProvider>
   </>,
   document.getElementById('root')
 );

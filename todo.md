@@ -1,5 +1,10 @@
 - add duplicate template
+- progress bar and error display [DONE]
+- auto extract fields
+- configure illustrator folder
+- add translation system
 - add upgrade system
-- fix generate file bug [DONE]
 - polish style
-- progress bar and error display
+- close popin [DONE]
+- Auto focus on first field
+- fix generate file bug [DONE]

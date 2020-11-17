@@ -3,15 +3,21 @@ import styled from 'styled-components';
 import {PreferenceContext} from './context/PreferenceContext';
 import {useTemplates} from './hooks/useTemplates';
 import {Render, useRenders} from './hooks/useRenders';
-import {Restart20, RequestQuote20, Launch20, AddFilled24} from '@carbon/icons-react';
-import {FormSelect, Navbar, NavbarBrand, ListGroup, ListGroupItem} from 'shards-react';
-import {CreateRender} from './components/CreateRender';
+import {RequestQuote20, AddFilled24} from '@carbon/icons-react';
+import {Navbar, NavbarBrand, ListGroup, ListGroupItem} from 'shards-react';
+import {CreateRender} from './components/Render/CreateRender';
 import {usePreferences} from './hooks/usePreferences';
 import {RefreshState} from './components/RefreshState';
 import {IconButton} from './components/UI';
-import {RegenerateRender} from './components/RegenerateRender';
+import {RegenerateRender} from './components/Render/RegenerateRender';
+import {OpenTemplate} from './components/Template/OpenTemplate';
+import {OpenRender} from './components/Render/OpenRender';
+import {ConfigureTemplateFields} from './components/Template/ConfigureTemplateFields';
+import {Template} from '../common/model/template';
+import {TemplateSelector} from './components/Template/TemplateSelector';
+import {DuplicateTemplate} from './components/Template/DuplicateTemplate';
+import {ChangeTemplateDirectory} from './components/ChangeTemplateDirectory';
 
-const {ipcRenderer} = window.require('electron');
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -31,18 +37,8 @@ const Header = styled(Navbar)`
 
 const ButtonContainer = styled.div`
   display: flex;
-`;
-
-const TemplateSelector = styled(FormSelect)`
-  border-radius: 20px;
-  border: none;
-  text-transform: capitalize;
-  padding: 0 40px 0 20px;
-  margin-right: 10px;
-`;
-
-const Option = styled.option`
-  text-transform: capitalize;
+  align-items: center;
+  color: white;
 `;
 
 const RenderList = styled(ListGroup)`
@@ -67,14 +63,7 @@ const Footer = styled.div`
 
 const App = () => {
   const preferences = usePreferences();
-  const [
-    templates,
-    currentTemplate,
-    setCurrentTemplate,
-    updateTemplates,
-    updateTemplate,
-    generateRender,
-  ] = useTemplates(preferences);
+  const [templates, currentTemplate, setCurrentTemplate, updateTemplates] = useTemplates(preferences);
   const [renders] = useRenders(preferences, currentTemplate);
 
   return (
@@ -85,43 +74,27 @@ const App = () => {
           <Spacer />
           <ButtonContainer>
             {currentTemplate && (
-              <TemplateSelector
-                id="template-selector"
-                value={currentTemplate.name}
-                onChange={(event: any) => {
-                  setCurrentTemplate(event.currentTarget.value);
-                }}
-              >
-                {templates.map(template => (
-                  <Option key={template.name} value={template.name}>
-                    {template.name}
-                  </Option>
-                ))}
-              </TemplateSelector>
-            )}
-            {currentTemplate && (
-              <IconButton
-                onClick={() => {
-                  ipcRenderer.invoke('templates:open', {templateName: currentTemplate.name});
-                }}
-              >
-                <Launch20 color="white" />
-              </IconButton>
-            )}
-            {currentTemplate && (
-              <CreateRender
-                template={currentTemplate}
-                updateTemplate={async template => {
-                  await updateTemplate(template);
-                  updateTemplates();
-                }}
-                generateRender={generateRender}
-              />
+              <>
+                Template:
+                <TemplateSelector
+                  currentTemplate={currentTemplate}
+                  templates={templates}
+                  onChange={(template: Template) => {
+                    setCurrentTemplate(template.name);
+                  }}
+                />
+                <DuplicateTemplate template={currentTemplate} />
+                <OpenTemplate template={currentTemplate} />
+                {0 < currentTemplate.fields.length && <CreateRender template={currentTemplate} />}
+              </>
             )}
           </ButtonContainer>
         </Header>
         <RenderList>
-          {0 === renders.length && (
+          {currentTemplate && 0 === currentTemplate.fields.length && (
+            <ConfigureTemplateFields template={currentTemplate} updateTemplates={updateTemplates} />
+          )}
+          {currentTemplate && currentTemplate.fields.length > 0 && 0 === renders.length && (
             <RenderItem>
               There is no render for now. To create a new render from this template click on the &nbsp;{' '}
               <AddFilled24 color="#007bff" />
@@ -132,29 +105,20 @@ const App = () => {
             <RenderItem key={render.identifier}>
               {render.name ?? render.identifier}
               <Spacer />
-              <RegenerateRender
-                onRegenerate={() => {
-                  ipcRenderer.invoke('renders:generate', render);
-                }}
-              />
+              <RegenerateRender render={render} />
               <IconButton
                 onClick={() => {
-                  // ipcRenderer.invoke('renders:generate', render);
+                  // ipcRenderer.invoke('render:generate', render);
                 }}
               >
                 <RequestQuote20 />
               </IconButton>
-              <IconButton
-                onClick={() => {
-                  ipcRenderer.invoke('renders:open', render);
-                }}
-              >
-                <Launch20 />
-              </IconButton>
+              <OpenRender render={render} />
             </RenderItem>
           ))}
         </RenderList>
         <Footer>
+          <ChangeTemplateDirectory />
           <Spacer />
           <RefreshState onRefresh={updateTemplates} />
         </Footer>

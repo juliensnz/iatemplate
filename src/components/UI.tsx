@@ -1,4 +1,3 @@
-import React from 'react';
 import styled from 'styled-components';
 
 const IconButton = styled.span`
@@ -10,5 +9,12 @@ const IconButton = styled.span`
     cursor: pointer;
   }
 `;
+const ButtonContainer = styled.div`
+  display: flex;
+`;
 
-export {IconButton};
+const Spacer = styled.div`
+  flex: 1;
+`;
+
+export {IconButton, ButtonContainer, Spacer};

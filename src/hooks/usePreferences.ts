@@ -15,7 +15,6 @@ const usePreferences = (): Preferences => {
 
   useEffect(() => {
     ipcRenderer.on('preferences:updated', updatePreferences);
-
     updatePreferences();
 
     return () => {

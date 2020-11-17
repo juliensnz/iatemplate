@@ -4,6 +4,7 @@ import * as isDev from 'electron-is-dev';
 import installExtension, {REACT_DEVELOPER_TOOLS} from 'electron-devtools-installer';
 import {getTemplates, openTemplate, writeTemplate} from './templates';
 import {generateRender, getRenders, openRender} from './renders';
+import {Progress} from '../common/model/progress';
 const Store = require('electron-store');
 const store = new Store();
 const {dialog} = require('electron');
@@ -11,15 +12,27 @@ const {dialog} = require('electron');
 let win: BrowserWindow | null = null;
 
 ipcMain.handle('getStoreValue', (event, key) => {
-  return store.get(key);
+  try {
+    return store.get(key);
+  } catch (error) {
+    console.error(error);
+  }
 });
-ipcMain.handle('templates:get', (event, path) => {
-  return getTemplates(path);
+ipcMain.handle('template:get', (event, path) => {
+  try {
+    return getTemplates(path);
+  } catch (error) {
+    console.error(error);
+  }
 });
-ipcMain.handle('templates:open', (event, options) => {
-  openTemplate(store.get('preferences').logoDirectory, options.templateName);
+ipcMain.handle('template:open', (event, options) => {
+  try {
+    openTemplate(store.get('preferences').logoDirectory, options.templateName);
+  } catch (error) {
+    console.error(error);
+  }
 });
-ipcMain.handle('templates:write', (event, template) => {
+ipcMain.handle('template:write', (event, template) => {
   try {
     writeTemplate(store.get('preferences').logoDirectory, template);
   } catch (error) {
@@ -27,33 +40,64 @@ ipcMain.handle('templates:write', (event, template) => {
   }
 });
 
-ipcMain.handle('renders:get', (event, options) => {
-  return getRenders(store.get('preferences').logoDirectory, options.templateName);
+ipcMain.handle('render:get', (event, options) => {
+  try {
+    return getRenders(store.get('preferences').logoDirectory, options.templateName);
+  } catch (error) {
+    console.error(error);
+  }
 });
 
-ipcMain.handle('renders:generate', async (event, render) => {
-  await generateRender(store.get('preferences').logoDirectory, render);
+ipcMain.on('render:generate', async (event, {render}) => {
+  const updateProgress = (progress: Progress) => {
+    event.reply('progress:update', progress);
+  };
+
+  try {
+    await generateRender(store.get('preferences').logoDirectory, render, updateProgress);
+  } catch (error) {
+    console.error(error);
+  }
 });
 
-ipcMain.handle('renders:open', (event, render) => {
-  openRender(store.get('preferences').logoDirectory, render.template, render.identifier);
+ipcMain.handle('render:open', (event, render) => {
+  try {
+    openRender(store.get('preferences').logoDirectory, render.template, render.identifier);
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 const checkLogoDirectory = async () => {
   while (undefined === store.get('preferences')) {
-    const logoDirectory = await dialog.showOpenDialog({properties: ['openDirectory']});
-    if (logoDirectory.canceled) {
+    const updated = updateTemplateDirectory();
+    if (!updated) {
       continue;
     }
-
-    const preferences = {
-      logoDirectory: logoDirectory.filePaths[0],
-    };
-
-    store.set('preferences', preferences);
-    ipcMain.emit('preferences:updated');
   }
 };
+
+const updateTemplateDirectory = async () => {
+  const logoDirectory = await dialog.showOpenDialog({properties: ['openDirectory']});
+  if (logoDirectory.canceled) {
+    return false;
+  }
+
+  const preferences = {
+    logoDirectory: logoDirectory.filePaths[0],
+  };
+
+  console.log(preferences);
+
+  store.set('preferences', preferences);
+  ipcMain.emit('preferences:updated');
+
+  return true;
+};
+
+ipcMain.handle('preferences:directory:update', async () => {
+  await updateTemplateDirectory();
+});
 
 function createWindow() {
   win = new BrowserWindow({

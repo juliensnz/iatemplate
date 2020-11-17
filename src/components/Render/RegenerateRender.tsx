@@ -1,31 +1,34 @@
 import {Restart20} from '@carbon/icons-react';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import styled from 'styled-components';
-import {IconButton} from './UI';
+import {Render, useGenerateRender} from '../../hooks/useRenders';
+import {IconButton} from '../UI';
 
 const RegenerateIcon = styled(Restart20)<{isLoading: boolean}>`
   @keyframes rotating {
     from {
-      transform: rotate(360deg);
+      transform: rotate(0deg);
     }
     to {
-      transform: rotate(0deg);
+      transform: rotate(360deg);
     }
   }
 
   ${props => (props.isLoading ? 'animation: rotating 1s ease-in-out infinite' : '')}
 `;
 
-const RegenerateRender = ({onRegenerate}: {onRegenerate: () => void}) => {
+const RegenerateRender = ({render}: {render: Render}) => {
   const [isLoading, setIsLoading] = useState(false);
-  const refresh = useCallback(async () => {
+  const generateRender = useGenerateRender();
+
+  const regenerateRender = useCallback(async () => {
     setIsLoading(true);
-    onRegenerate();
+    generateRender(render);
     setTimeout(() => setIsLoading(false), 1000);
-  }, [onRegenerate]);
+  }, [render, generateRender]);
 
   return (
-    <IconButton onClick={refresh}>
+    <IconButton onClick={regenerateRender}>
       <RegenerateIcon isLoading={isLoading} />
     </IconButton>
   );

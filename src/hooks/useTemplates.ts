@@ -1,48 +1,34 @@
 import {useState, useEffect, useCallback} from 'react';
 import {Preferences} from '../context/PreferenceContext';
-import {Render} from './useRenders';
 import {Template} from '../../common/model/template';
 
 const {ipcRenderer} = window.require('electron');
 
-const useTemplates = (
-  preferences: Preferences
-): [
-  Template[],
-  Template | undefined,
-  (newCurrentTemplate: string) => void,
-  () => Promise<void>,
-  (updatedTemplate: Template) => void,
-  (render: Render) => Promise<void>
-] => {
+const useTemplates = (preferences: Preferences) => {
   const [templates, setTemplates] = useState([]);
   const [currentTemplate, setCurrentTemplate] = useState<Template | undefined>(undefined);
 
-  const getTemplates = useCallback(async (path: string): Promise<void> => {
-    const updatedTemplates = await ipcRenderer.invoke('templates:get', path);
+  const getTemplates = useCallback(
+    async (path: string): Promise<void> => {
+      const updatedTemplates = await ipcRenderer.invoke('template:get', path);
 
-    setTemplates(updatedTemplates);
-    if (
-      undefined === currentTemplate ||
-      undefined === updatedTemplates.find((updatedTemplate: Template) => updatedTemplate.name === currentTemplate.name)
-    ) {
-      setCurrentTemplate(updatedTemplates[0]);
-    }
-  }, []);
-
-  const updateTemplate = useCallback(async (template: Template) => {
-    await ipcRenderer.invoke('templates:write', template);
-  }, []);
+      setTemplates(updatedTemplates);
+      if (
+        undefined === currentTemplate ||
+        undefined ===
+          updatedTemplates.find((updatedTemplate: Template) => updatedTemplate.name === currentTemplate.name)
+      ) {
+        setCurrentTemplate(updatedTemplates[0]);
+      }
+    },
+    [currentTemplate]
+  );
 
   const updateTemplates = useCallback(async (): Promise<void> => {
     if (!preferences.logoDirectory) return;
 
     await getTemplates(preferences.logoDirectory);
-  }, [preferences]);
-
-  const generateRender = useCallback(async (render: Render): Promise<void> => {
-    return await ipcRenderer.invoke('renders:generate', render);
-  }, []);
+  }, [preferences, getTemplates]);
 
   const setCurrentTemplateByName = useCallback(
     (name: string) => {
@@ -57,7 +43,7 @@ const useTemplates = (
     }
   }, [preferences.logoDirectory, getTemplates]);
 
-  return [templates, currentTemplate, setCurrentTemplateByName, updateTemplates, updateTemplate, generateRender];
+  return [templates, currentTemplate, setCurrentTemplateByName, updateTemplates] as const;
 };
 
 export {useTemplates};

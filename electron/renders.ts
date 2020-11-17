@@ -1,6 +1,9 @@
 import {Render} from '../common/model/render';
+import {advanceProgress, createProgress, encounterError, finishProgress, Progress} from '../common/model/progress';
 import {getFoldersInFolder, getJsonData, writeJsonData, openFile} from './infrastructure/fs';
 import {launchExport, launchRenaming, packageTemplate, waitForFileToBeOpen} from './infrastructure/illustrator';
+import {resolve} from 'dns';
+import {notify} from './infrastructure/notification';
 
 const childProcess = require('child_process');
 
@@ -22,16 +25,50 @@ const openRender = (path: string, templateName: string, renderName: string) => {
   openFile(getRenderFolder(path, templateName, renderName));
 };
 
-const generateRender = async (path: string, render: Render) => {
-  console.log(path, render);
-  removePreviousRender(path, render);
-  await openTemplateFile(path, render);
-  await packageTemplate(path, render);
-  dumpConfiguration(path, render);
-  await openRenderSourceFile(path, render);
-  launchRenaming(render.data);
-  await openRenderVariantFile(path, render);
-  launchExport();
+const generateRender = async (path: string, render: Render, updateProgress: (progress: Progress) => void) => {
+  let progress = createProgress(8);
+  try {
+    progress = advanceProgress(progress, 'Remove Previous render');
+    updateProgress(progress);
+    await wait(1000);
+    // removePreviousRender(path, render);
+    progress = advanceProgress(progress, 'Open template file');
+    updateProgress(progress);
+    await wait(1000);
+    // await openTemplateFile(path, render);
+    progress = advanceProgress(progress, 'Package template to create render structure');
+    updateProgress(progress);
+    await wait(1000);
+    // await packageTemplate(path, render);
+    progress = advanceProgress(progress, 'Dump render configuration');
+    updateProgress(progress);
+    await wait(1000);
+    // dumpConfiguration(path, render);
+    progress = advanceProgress(progress, 'Open Element file to prepare renaming');
+    updateProgress(progress);
+    await wait(1000);
+    // await openRenderSourceFile(path, render);
+    progress = advanceProgress(progress, 'Launch renaming');
+    updateProgress(progress);
+    await wait(1000);
+    // launchRenaming(render.data);
+    progress = advanceProgress(progress, 'Open variant file');
+    updateProgress(progress);
+    await wait(1000);
+    // await openRenderVariantFile(path, render);
+    progress = advanceProgress(progress, 'Launch export');
+    updateProgress(progress);
+    await wait(1000);
+    // launchExport();
+    updateProgress(finishProgress(progress));
+  } catch (error) {
+    updateProgress(encounterError(progress, error));
+    return;
+  }
+
+  notify('New render', 'The rendering of your template is done, enjoy 🎉', () =>
+    openRender(path, render.template, render.identifier)
+  );
 };
 
 // Utilitary methods
@@ -65,6 +102,14 @@ const openRenderSourceFile = async (path: string, render: Render) => {
 };
 const openRenderVariantFile = async (path: string, render: Render) => {
   await openFileAndWait(`${getRenderFolder(path, render.template, render.identifier)}/declinaisons.ai`);
+};
+
+const wait = async (time: number) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, time);
+  });
 };
 
 export {getRenders, openRender, generateRender};

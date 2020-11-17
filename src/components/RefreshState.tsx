@@ -13,7 +13,7 @@ const RefreshIcon = styled(Renew20)<{isLoading: boolean}>`
     }
   }
 
-  ${props => (props.isLoading ? 'animation: rotating 2s ease-in-out infinite' : '')}
+  ${({isLoading}) => (isLoading ? 'animation: rotating 2s ease-in-out infinite' : '')}
 `;
 
 const RefreshState = ({onRefresh}: {onRefresh: () => Promise<void>}) => {

@@ -1,6 +1,7 @@
-import {useState, useMemo, useEffect} from 'react';
+import {useState, useMemo, useEffect, useCallback, useContext} from 'react';
 import {Preferences} from '../context/PreferenceContext';
 import {Template} from '../../common/model/template';
+import {ElectronContext} from '../context/ElectronContext';
 
 const {ipcRenderer} = window.require('electron');
 
@@ -16,7 +17,7 @@ const useRenders = (preferences: Preferences, currentTemplate: Template | undefi
 
   const getRenders = useMemo(
     () => async (templateName: string, path: string) => {
-      const updatedRenders = await ipcRenderer.invoke('renders:get', {
+      const updatedRenders = await ipcRenderer.invoke('render:get', {
         templateName,
         path,
       });
@@ -35,5 +36,16 @@ const useRenders = (preferences: Preferences, currentTemplate: Template | undefi
   return [renders];
 };
 
-export {useRenders};
+const useGenerateRender = () => {
+  const {send} = useContext(ElectronContext);
+
+  return useCallback(
+    async (render: Render) => {
+      await send('render:generate', {render});
+    },
+    [send]
+  );
+};
+
+export {useRenders, useGenerateRender};
 export type {Render};
